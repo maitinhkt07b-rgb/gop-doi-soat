@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gộp và đối soát</title>
+<!--
+  KHUNG BÊN PHẢI CỦA ADD-IN EXCEL. Lệnh node 04_Addin_Excel/dong_goi_addin.js chép tệp này vào dist.
+  office.js phải tải từ máy chủ của Microsoft theo quy định của Office Add-in. Mã của tool không gọi mạng:
+  tệp người dùng chọn được đọc và xử lý ngay trong khung, kết quả ghi vào workbook đang mở.
+-->
+<script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+<script src="loi_xu_ly.js"></script>
+<link rel="stylesheet" href="taskpane.css">
+</head>
+<body>
+<header>
+  <h1>Gộp và đối soát</h1>
+  <p class="rieng">Dữ liệu xử lý ngay trên máy, không gửi đi đâu</p>
+  <p id="che-do" class="che-do">Đang kết nối với Excel…</p>
+</header>
+<main>
+  <section class="buoc">
+    <h2><span class="so">1</span>Chọn các tệp cần gộp</h2>
+    <div class="hang">
+      <label class="nut">Chọn tệp<input id="chon-tep" type="file" multiple accept=".xlsx,.xlsm,.xls,.csv"></label>
+      <label class="nut">Chọn thư mục<input id="chon-thu-muc" type="file" webkitdirectory multiple></label>
+      <button id="xoa-tep" type="button" class="phu">Xóa</button>
+    </div>
+    <div id="tha" class="tha">Hoặc kéo thả tệp vào đây</div>
+    <p id="ds-tep" class="nho">Chưa có tệp nào.</p>
+  </section>
+
+  <section class="buoc">
+    <h2><span class="so">2</span>Bộ cột chuẩn</h2>
+    <p class="nho" id="ten-mau"></p>
+    <details><summary>Xem và sửa cấu hình</summary>
+      <textarea id="cau-hinh" spellcheck="false" aria-label="Cấu hình dạng JSON"></textarea>
+      <div class="hang"><button id="luu-ch" type="button" class="phu">Lưu ra tệp</button><label class="nut phu">Nạp tệp<input id="nap-ch" type="file" accept=".json"></label><button id="mac-dinh" type="button" class="phu">Về mẫu ban đầu</button></div>
+    </details>
+    <label class="nho dong" for="xuat">Dạng tệp dữ liệu gộp
+      <select id="xuat"><option value="tu-dong">Tự chọn theo cỡ dữ liệu</option><option value="xlsx">Excel .xlsx</option><option value="csv">CSV UTF-8</option></select></label>
+    <label class="nho dong chon" id="dong-ghi"><input id="ghi-excel" type="checkbox" checked> Ghi kết quả thành các sheet mới trong workbook này</label>
+  </section>
+
+  <section class="buoc">
+    <h2><span class="so">3</span>Gộp và đối soát</h2>
+    <button id="chay" class="chinh rong" type="button" disabled>Gộp và đối soát</button>
+    <div class="thanh" aria-hidden="true"><div id="thanh"></div></div>
+    <p id="trang-thai" class="nho" role="status">Chọn tệp ở bước 1 để bắt đầu.</p>
+  </section>
+
+  <section class="buoc an" id="ket-qua">
+    <h2><span class="so">4</span>Kết quả</h2>
+    <div class="kpi" id="kpi"></div>
+    <p id="ghi-trang-thai" class="ghi an" role="status"></p>
+    <div class="cot-nut">
+      <button id="ghi-lai" type="button" class="chinh">Ghi vào workbook này</button>
+      <button id="mo-moi" type="button">Mở thành workbook mới</button>
+      <button id="tai-du-lieu" type="button">Tải dữ liệu gộp</button>
+      <button id="tai-bao-cao" type="button">Tải báo cáo đối soát</button>
+    </div>
+    <h3>Đối soát từng sheet</h3>
+    <div class="bang" id="bang-ds"></div>
+    <h3>Mẫu dòng lỗi và dòng trùng</h3>
+    <div class="bang" id="bang-loi"></div>
+  </section>
+</main>
+<footer class="nho">Lõi xử lý dùng chung với tool Gop_file_Excel.html · Dữ liệu thử là tình huống hư cấu Vân Phong</footer>
+<script src="taskpane.js"></script>
+</body>
+</html>

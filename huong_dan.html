@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gộp và đối soát · Hướng dẫn</title>
+<!-- Trang hỗ trợ của add-in (SupportUrl và LearnMoreUrl trong manifest). Lệnh đóng gói chép tệp này vào web. -->
+<link rel="stylesheet" href="taskpane.css">
+<style>
+body{background:var(--bg)}
+.trang{max-width:720px;margin:0 auto;padding:16px}
+.trang h1{font-size:20px;margin:0 0 6px}
+.trang h2{font-size:15px;margin:18px 0 6px}
+.trang p,.trang li{font-size:14px;line-height:1.55}
+.trang ol,.trang ul{padding-left:20px;margin:0}
+.trang li{margin:4px 0}
+.trang code{font-family:Consolas,monospace;font-size:12.5px;background:var(--soft);padding:1px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+<div class="trang">
+  <h1>Gộp và đối soát</h1>
+  <p class="rieng">Dữ liệu xử lý ngay trên máy, không gửi đi đâu</p>
+  <p>Add-in gộp nhiều tệp bảng kê .xlsx, .xlsm, .xls, .csv thành một bảng, đối soát từng sheet với dòng tổng ghi trong tệp, ghi nhật ký dòng lỗi và dòng trùng, tổng hợp thành tiền theo công trường và hạng mục.</p>
+
+  <h2>Cách dùng</h2>
+  <ol>
+    <li>Mở workbook muốn chứa kết quả, vào thẻ <b>Home</b> (Trang đầu), bấm nút <b>Gộp và đối soát</b>. Khung add-in mở bên phải.</li>
+    <li>Bước 1: bấm <b>Chọn tệp</b> hoặc <b>Chọn thư mục</b>, hoặc kéo thả tệp vào khung.</li>
+    <li>Bước 2: giữ bộ cột chuẩn có sẵn hoặc sửa trong <b>Xem và sửa cấu hình</b>. Lưu cấu hình ra tệp .json để dùng lại tháng sau.</li>
+    <li>Bước 3: bấm <b>Gộp và đối soát</b>. Xong, add-in thêm các sheet <code>Du_lieu_gop</code>, <code>Doi_soat</code>, <code>Nhat_ky_loi</code>, <code>Tong_hop</code> vào cuối workbook và mở sheet Doi_soat.</li>
+    <li>Nhấn <b>Ctrl+S</b> để lưu workbook.</li>
+  </ol>
+
+  <h2>Đọc kết quả</h2>
+  <ul>
+    <li><b>Du_lieu_gop</b>: dữ liệu gộp, 3 cột cuối Tệp nguồn, Sheet, Dòng gốc trỏ về đúng dòng trong tệp gốc.</li>
+    <li><b>Doi_soat</b>: mỗi sheet một dòng. Kết luận ĐẠT khi tổng các dòng khớp dòng tổng ghi trong tệp, LỆCH khi chênh từ 0,5 đồng trở lên.</li>
+    <li><b>Nhat_ky_loi</b>: dòng thiếu giá trị bắt buộc, không đọc được số, ngày không hợp lệ, và dòng trùng.</li>
+    <li><b>Tong_hop</b>: thành tiền theo công trường và hạng mục, có cột Cộng và dòng Cộng.</li>
+  </ul>
+
+  <h2>Lưu ý</h2>
+  <ul>
+    <li>Chạy lại trong cùng workbook thì sheet mới có thêm hậu tố <code>_2</code>, <code>_3</code>, không ghi đè kết quả cũ.</li>
+    <li>Dữ liệu gộp quá lớn để chèn thẳng vào workbook (thường từ vài trăm nghìn dòng) thì add-in chỉ chèn các sheet báo cáo. Bấm <b>Tải dữ liệu gộp</b> để lấy tệp, hoặc <b>Mở thành workbook mới</b>.</li>
+    <li>Trên 300.000 dòng, dữ liệu gộp tự xuất dạng CSV UTF-8.</li>
+  </ul>
+</div>
+</body>
+</html>

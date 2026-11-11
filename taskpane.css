@@ -1,0 +1,55 @@
+/* Khung bên phải Excel rộng khoảng 320 đến 450px. Màu lấy theo tool Gop_file_Excel.html, chữ theo Office. */
+:root{--bg:#F5F5F5;--card:#FFFFFF;--ink:#1A1A1A;--ink2:#555;--line:#E2E4E4;--brand:#19928E;--brand-ink:#0F6E6A;--soft:#E8F5F4;--warn:#B4532A;--warn-soft:#FBEFEA;--ok:#1E7B4E;--ok-soft:#E6F4EC;--on:#FFFFFF}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:'Segoe UI',Arial,Helvetica,sans-serif;font-size:14px;line-height:1.45}
+header{background:var(--card);border-bottom:1px solid var(--line);padding:12px 14px}
+h1{font-size:18px;margin:0}
+.rieng{display:inline-block;font-size:12px;color:var(--brand-ink);background:var(--soft);border:1px solid var(--brand);border-radius:999px;padding:1px 9px;margin:6px 0 0}
+.che-do{font-size:12px;color:var(--ink2);margin:6px 0 0}
+.che-do.canh{color:var(--warn);font-weight:600}
+main{padding:12px 10px 4px}
+.buoc{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px}
+.buoc h2{font-size:14.5px;margin:0 0 8px;display:flex;align-items:center;gap:8px}
+h3{font-size:13.5px;margin:12px 0 4px}
+.so{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:var(--brand);color:var(--on);font-size:12px}
+.hang{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+label.nut,button{font:inherit;font-weight:600;font-size:13px;border-radius:6px;padding:6px 11px;border:1px solid var(--brand);background:var(--card);color:var(--brand-ink);cursor:pointer}
+label.nut.phu,button.phu{font-weight:400;border-color:var(--line);color:var(--ink)}
+button.chinh{background:var(--brand);color:var(--on)}
+button.rong{width:100%;padding:8px}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,label.nut:focus-within,select:focus-visible,summary:focus-visible{outline:2px solid var(--brand-ink);outline-offset:2px}
+label.nut input{position:absolute;width:1px;height:1px;opacity:0}
+label.nut{position:relative}
+select{font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink);margin-top:4px;width:100%}
+.tha{margin-top:8px;border:2px dashed var(--line);border-radius:8px;padding:10px;text-align:center;color:var(--ink2);font-size:13px}
+.tha.vao{border-color:var(--brand);background:var(--soft)}
+.nho{font-size:12.5px;color:var(--ink2);margin:8px 0 0}
+.dong{display:block;margin-top:10px}
+.chon{display:flex;gap:6px;align-items:flex-start}
+.chon input{margin-top:3px}
+.canh{color:var(--warn);font-weight:600}
+textarea{width:100%;min-height:160px;font-family:Consolas,monospace;font-size:12px;border:1px solid var(--line);border-radius:6px;padding:6px;margin:6px 0}
+details summary{cursor:pointer;color:var(--brand-ink);font-weight:600;font-size:13px;margin:4px 0}
+.thanh{height:10px;background:#EEF1F1;border-radius:5px;overflow:hidden;margin:10px 0 4px}
+.thanh div{height:100%;width:0;background:var(--brand);transition:width .2s}
+.kpi{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-bottom:10px}
+.kpi div{border:1px solid var(--line);border-top:3px solid var(--brand);border-radius:8px;padding:6px 8px;min-width:0}
+.kpi div.lech{border-top-color:var(--warn)}
+.kpi b{display:block;font-size:15px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.kpi span{font-size:11.5px;color:var(--ink2)}
+.ghi{font-size:12.5px;border-radius:8px;padding:8px 10px;margin:0 0 10px;background:var(--ok-soft);color:var(--ok)}
+.ghi.loi{background:var(--warn-soft);color:var(--warn)}
+.cot-nut{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
+.bang{overflow-x:auto;border:1px solid var(--line);border-radius:8px;margin:4px 0 6px}
+.bang p{margin:8px;font-size:12.5px;color:var(--ink2)}
+table{border-collapse:collapse;width:100%;font-size:12px}
+th,td{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{background:#F2F4F4;font-size:11px;color:var(--ink2)}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+.dat{color:var(--ok);background:var(--ok-soft);border-radius:999px;padding:1px 7px;font-weight:600}
+.lech-chu{color:var(--warn);background:var(--warn-soft);border-radius:999px;padding:1px 7px;font-weight:600}
+.an{display:none}
+footer{padding:0 12px 16px}
+@media (prefers-reduced-motion:reduce){.thanh div{transition:none}}
