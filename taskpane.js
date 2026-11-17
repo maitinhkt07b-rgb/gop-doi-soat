@@ -1,14 +1,20 @@
 /* Logic khung bên phải của add-in Excel. Dùng chung lõi với tool Gop_file_Excel.html:
    worker_gop.js là bản ghép SheetJS + tho_doc.js + loi_xu_ly.js + worker_chinh.js do dong_goi_addin.js tạo,
    nói chuyện theo giao thức ở mục 4.4 YEU_CAU_KY_THUAT.md. Phần riêng của add-in là ghi kết quả vào workbook:
-   tệp .xlsx do worker tạo được chèn thành sheet mới (ExcelApi 1.13) hoặc mở thành workbook mới (ExcelApi 1.8). */
+   - Microsoft 365 (ExcelApi 1.13): chèn nguyên tệp .xlsx do worker tạo thành các sheet mới.
+   - Excel 2016, 2019, 2021 (ExcelApi 1.2 đến 1.12): worker gửi kèm các bảng, add-in ghi từng khối ô vào sheet mới.
+   - Mở kết quả thành workbook mới khi có ExcelApi 1.8. */
 (function () {
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
   var GF = window.GopFile, coLoi = !!(GF && GF.CAU_HINH_MAU), tep = [], ketQua = null;
-  var trongExcel = false, coChen = false, coTaoMoi = false, daBietCheDo = false;
+  var trongExcel = false, coChen = false, coGhiO = false, coTaoMoi = false, daBietCheDo = false;
   var DUOI = /\.(xlsx|xlsm|xls|csv)$/i, KHOA_LUU = 'gop-file-cau-hinh';
   var TEN_SHEET = ['Du_lieu_gop', 'Doi_soat', 'Nhat_ky_loi', 'Tong_hop'];
+  var GIOI_HAN_GHI_O = 200000;   // ghi từng ô thì trên số dòng này dữ liệu gộp chỉ tải về, chỉ ghi các sheet báo cáo
+  var KHOI_GHI = 5000;           // mỗi lần đồng bộ với Excel ghi 5.000 dòng
+
+  function ghiDuoc() { return trongExcel && (coChen || coGhiO); }
 
   // ---------- Kết nối Excel ----------
 
@@ -17,15 +23,15 @@
     var cd = $('che-do');
     if (trongExcel) {
       cd.className = 'che-do';
-      cd.textContent = coChen ? 'Đã kết nối Excel. Kết quả sẽ thêm thành các sheet mới ở cuối workbook.'
-        : coTaoMoi ? 'Bản Excel này chưa chèn sheet được, kết quả sẽ mở thành workbook mới.'
+      cd.textContent = coChen || coGhiO ? 'Đã kết nối Excel. Kết quả sẽ thêm thành các sheet mới ở cuối workbook.'
+        : coTaoMoi ? 'Bản Excel này chưa ghi sheet được, kết quả sẽ mở thành workbook mới.'
         : 'Bản Excel này chưa ghi kết quả được, hãy tải tệp kết quả về.';
     } else {
       cd.className = 'che-do canh';
       cd.textContent = 'Đang mở ngoài Excel. Vẫn gộp và đối soát được, kết quả chỉ tải về.';
     }
-    $('dong-ghi').classList.toggle('an', !(trongExcel && coChen));
-    $('ghi-lai').classList.toggle('an', !(trongExcel && coChen));
+    $('dong-ghi').classList.toggle('an', !ghiDuoc());
+    $('ghi-lai').classList.toggle('an', !ghiDuoc());
     $('mo-moi').classList.toggle('an', !(trongExcel && coTaoMoi));
   }
   if (window.Office && typeof Office.onReady === 'function') {
@@ -34,6 +40,7 @@
       if (trongExcel) {
         var rq = Office.context.requirements;
         coChen = rq.isSetSupported('ExcelApi', '1.13');
+        coGhiO = rq.isSetSupported('ExcelApi', '1.2');
         coTaoMoi = rq.isSetSupported('ExcelApi', '1.8');
       }
       capNhatCheDo();
@@ -149,14 +156,10 @@
     return ds.join(', ');
   }
 
-  // Tệp dữ liệu .xlsx đã gồm cả các sheet báo cáo. Dữ liệu là CSV, hoặc quá lớn để Excel nhận một lần, thì chỉ chèn báo cáo
-  function ghiVaoExcel() {
-    var m = ketQua; if (!m) return Promise.resolve();
-    var tb = $('ghi-trang-thai'), nut = $('ghi-lai');
-    var coXlsx = m.dinhDang === 'xlsx' && m.duLieu && m.duLieu.blob;
-    tb.className = 'ghi'; tb.textContent = 'Đang ghi kết quả vào workbook…';
-    nut.disabled = true;
-    var loiDuLieu = null;
+  // Cách 1, Microsoft 365. Tệp dữ liệu .xlsx đã gồm cả các sheet báo cáo.
+  // Dữ liệu là CSV, hoặc quá lớn để Excel nhận một lần, thì chỉ chèn báo cáo
+  function ghiBangChen(m) {
+    var coXlsx = m.dinhDang === 'xlsx' && m.duLieu && m.duLieu.blob, loiDuLieu = null;
     var buoc = coXlsx ? chenSheet(m.duLieu.blob, m.hauTo).then(function () { return true; }, function (e) { loiDuLieu = e; return false; }) : Promise.resolve(false);
     return buoc.then(function (xong) {
       if (xong) return 'Đã thêm các sheet ' + tenCacSheet(m, true) + ' vào cuối workbook.';
@@ -164,14 +167,87 @@
         return 'Đã thêm các sheet ' + tenCacSheet(m, false) + ' vào cuối workbook. ' +
           (loiDuLieu ? 'Dữ liệu gộp quá lớn để chèn thẳng (' + thongDiep(loiDuLieu) + '), bấm Tải dữ liệu gộp để lấy tệp.' : 'Dữ liệu gộp ở dạng CSV, bấm Tải dữ liệu gộp để lấy tệp.');
       });
-    }).then(function (chu) {
-      tb.textContent = chu;
+    });
+  }
+
+  // Cách 2, Excel 2016, 2019, 2021: ghi từng khối ô vào sheet mới, chỉ dùng hàm của ExcelApi 1.1 và 1.2
+  function chuCot(n) { var t = ''; n++; while (n > 0) { var m = (n - 1) % 26; t = String.fromCharCode(65 + m) + t; n = Math.floor((n - 1) / 26); } return t; }
+
+  // Chữ giống số hoặc ngày, hay bắt đầu bằng = + - @, thì thêm dấu nháy để Excel giữ nguyên là chữ
+  var GIONG_SO = /^[\s\d.,:\/\-+()%]*\d[\s\d.,:\/\-+()%]*$/;
+  function oGhi(v) {
+    if (v == null) return '';
+    if (typeof v === 'number') return isFinite(v) ? v : '';
+    if (typeof v === 'boolean') return v;
+    var s = String(v);
+    return /^[=+\-@]/.test(s) || GIONG_SO.test(s) ? "'" + s : s;
+  }
+
+  // Ghi một bảng thành sheet mới, mỗi lần 5.000 dòng. dinhDang[k] là định dạng số của cột k, áp cho các dòng dưới tiêu đề
+  function ghiMotBang(ten, aoa, dinhDang, baoTienDo) {
+    var soCot = aoa.reduce(function (mx, r) { return Math.max(mx, r.length); }, 1), soDong = aoa.length, cuoi = chuCot(soCot - 1);
+    return Excel.run(function (ctx) {
+      var ws = ctx.workbook.worksheets.add(ten), batDau = 0;
+      function mot() {
+        var khoi = aoa.slice(batDau, batDau + KHOI_GHI).map(function (r) { var o = new Array(soCot); for (var k = 0; k < soCot; k++) o[k] = oGhi(r[k]); return o; });
+        var d1 = batDau + 1, d2 = batDau + khoi.length, f1 = Math.max(d1, 2);
+        ws.getRange('A' + d1 + ':' + cuoi + d2).values = khoi;
+        if (d2 >= f1) (dinhDang || []).forEach(function (f, k) {
+          if (!f) return;
+          var mang = []; for (var i = f1; i <= d2; i++) mang.push([f]);
+          ws.getRange(chuCot(k) + f1 + ':' + chuCot(k) + d2).numberFormat = mang;
+        });
+        batDau = d2;
+        return ctx.sync().then(function () {
+          if (baoTienDo) baoTienDo(batDau, soDong);
+          if (batDau < soDong) return mot();
+          ws.getRange('A1:' + cuoi + '1').format.font.bold = true;
+          ws.getRange('A1:' + cuoi + Math.min(soDong, 200)).format.autofitColumns();
+          return ctx.sync();
+        });
+      }
+      return mot();
+    });
+  }
+
+  function dinhDangTheoTen(hdr, tenCot) { return hdr.map(function (h) { return tenCot.indexOf(h) >= 0 ? '#,##0' : null; }); }
+
+  function ghiBangO(m, tb) {
+    var b = m.bang, viec = [];
+    if (!b) return Promise.reject(new Error('thiếu bảng kết quả, hãy bấm Gộp và đối soát lại'));
+    // Tính hậu tố lúc ghi vì người dùng có thể đã thêm sheet sau khi gộp
+    return timHauTo().then(function (h) {
+      m.hauTo = h;
+      if (b.duLieu) viec.push(['Du_lieu_gop' + h, b.duLieu, b.dinhDang.concat([null, null, null])]);
+      viec.push(['Doi_soat' + h, b.doiSoat, dinhDangTheoTen(b.doiSoat[0], ['Tổng các dòng', 'Tổng ghi trong tệp', 'Chênh lệch'])]);
+      if (b.nhatKy) viec.push(['Nhat_ky_loi' + h, b.nhatKy, []]);
+      if (b.tongHop) viec.push(['Tong_hop' + h, b.tongHop, b.tongHop[0].map(function (x, k) { return k ? '#,##0' : null; })]);
+      return viec.reduce(function (p, v) {
+        return p.then(function () {
+          return ghiMotBang(v[0], v[1], v[2], function (d, n) { tb.textContent = 'Đang ghi sheet ' + v[0] + ', ' + soVN(Math.max(0, d - 1)) + '/' + soVN(n - 1) + ' dòng…'; });
+        });
+      }, Promise.resolve()).then(function () {
+        return Excel.run(function (ctx) { ctx.workbook.worksheets.getItem('Doi_soat' + h).activate(); return ctx.sync(); });
+      });
+    }).then(function () {
+      return 'Đã thêm các sheet ' + viec.map(function (v) { return v[0]; }).join(', ') + ' vào cuối workbook.' +
+        (b.duLieu ? '' : ' Dữ liệu gộp có ' + soVN(m.thongKe.dongGop) + ' dòng, quá lớn để ghi vào sheet, bấm Tải dữ liệu gộp để lấy tệp.');
+    });
+  }
+
+  function ghiVaoExcel() {
+    var m = ketQua; if (!m || !ghiDuoc()) return Promise.resolve();
+    var tb = $('ghi-trang-thai'), nut = $('ghi-lai');
+    tb.className = 'ghi'; tb.textContent = 'Đang ghi kết quả vào workbook…'; tb.classList.remove('an');
+    nut.disabled = true;
+    return (coChen ? ghiBangChen(m) : ghiBangO(m, tb)).then(function (chu) {
+      tb.textContent = chu + ' Nhấn Ctrl+S để lưu workbook.';
       nut.textContent = 'Đã ghi vào workbook';
     }, function (e) {
       tb.className = 'ghi loi';
-      tb.textContent = 'Chưa ghi được vào workbook, ' + thongDiep(e) + '. Có thể bấm Mở thành workbook mới hoặc tải tệp về.';
+      tb.textContent = 'Chưa ghi được vào workbook, ' + thongDiep(e) + '.' + (coTaoMoi ? ' Có thể bấm Mở thành workbook mới hoặc tải tệp về.' : ' Có thể tải tệp về.');
       nut.disabled = false;
-    }).then(function () { tb.classList.remove('an'); });
+    });
   }
   $('ghi-lai').onclick = function () { ghiVaoExcel(); };
 
@@ -249,20 +325,23 @@
         $('thanh').style.width = '100%';
         $('trang-thai').textContent = tg ? 'Xong sau ' + giay(tg.tong) + '. Đọc ' + giay(tg.doc) + ', xử lý ' + giay(tg.xuLy) + ', ghi tệp ' + giay(tg.ghi) + '.' : 'Xong sau ' + giay(performance.now() - batDau) + '.';
         hienKetQua(m);
-        if (trongExcel && coChen && $('ghi-excel').checked) ghiVaoExcel();
+        if (ghiDuoc() && $('ghi-excel').checked) ghiVaoExcel();
       } else if (m.loai === 'loi') {
         ketThuc(); $('trang-thai').textContent = 'Có lỗi, ' + m.thongDiep;
       }
     };
     w.onerror = function (e) { ketThuc(); $('trang-thai').textContent = 'Luồng xử lý lỗi, ' + (e.message || 'không rõ nguyên nhân'); };
-    w.postMessage({ lenh: 'chay', tep: tep, cauHinh: ch, tuyChon: { xuat: $('xuat').value, nguongCSV: 300000, hauTo: hauTo } });
+    // Ghi từng ô (Excel 2016 đến 2021) cần worker gửi kèm các bảng, chèn tệp (Microsoft 365) thì không
+    var guiBang = trongExcel && !coChen && coGhiO;
+    w.postMessage({ lenh: 'chay', tep: tep, cauHinh: ch, tuyChon: { xuat: $('xuat').value, nguongCSV: 300000, hauTo: hauTo, guiBang: guiBang, gioiHanBang: GIOI_HAN_GHI_O } });
   }
 
   $('chay').onclick = function () {
     var ch = docCH();
     if (!ch) { $('trang-thai').textContent = coLoi ? 'Sửa cấu hình cho đúng JSON rồi chạy lại.' : 'Thiếu lõi xử lý, đóng gói lại add-in.'; return; }
     $('chay').disabled = true; $('ket-qua').classList.add('an'); $('thanh').style.width = '0%';
-    if (trongExcel && coChen && $('ghi-excel').checked) {
+    // Chèn tệp thì tên sheet nằm sẵn trong tệp worker tạo, nên tìm hậu tố trước khi gộp; ghi từng ô thì tìm lúc ghi
+    if (trongExcel && coChen) {
       $('trang-thai').textContent = 'Đang xem tên các sheet có sẵn.';
       timHauTo().then(function (h) { chay(ch, h); }, function () { chay(ch, '_' + (Date.now() % 100000)); });
     } else {
